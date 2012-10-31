@@ -5,7 +5,6 @@ wikipedia_topic_analyzer.py
 
 Created by Ari Ehrmann.
 Email address: <ari.ehrmann@gmail.com>
-LING 131A Final Project: Wikipedia Language Processor
 """
 
 from collections import defaultdict

@@ -5,7 +5,6 @@ wikipedia_corpus_reader.py
 
 Created by Ari Ehrmann.
 Email address: <ari.ehrmann@gmail.com>
-LING 131A Final Project: Wikipedia Language Processor
 """
 
 import re
@@ -16,6 +15,10 @@ import shutil
 from collections import defaultdict
 from nltk.corpus import PlaintextCorpusReader
 
+class SectionNotFoundError(Exception): pass
+class ArticleNotFoundError(Exception): pass
+class MultipleTopicError(Exception): pass
+
 class WikipediaCorpusReader(PlaintextCorpusReader):
 	"""
 	Reader specifically for use with Wikipedia articles. The reader accepts 
@@ -23,10 +26,11 @@ class WikipediaCorpusReader(PlaintextCorpusReader):
 	files containing the Wikipedia pages for the reader to process.
 	
 	Processes the initial Wikipedia page, scanning for all links to other
-	Wikipedia pages and scans the content of those pages.
+	Wikipedia pages and scans the content of those pages, using rudimentary
+	Regular Expressions
 	"""
 	BASE_WGET_COMMAND = r'wget --random-wait -qO- '
-	BASE_WIKIPEDIA_URL = r'http://en.wikipedia.org/wiki/'
+	BASE_WIKIPEDIA_URL = r'en.wikipedia.org/wiki/'
 	
 	def __init__(self, topic):
 		"""
@@ -38,7 +42,7 @@ class WikipediaCorpusReader(PlaintextCorpusReader):
 		:param topic: The text for the topic of this WikipediaCorpusReader
 		:type topic: str
 		
-		:raise ValueError: If the topic string does not correspond to a single Wikipedia topic
+		:raise MultipleTopicError: If the topic string does not correspond to a single Wikipedia topic
 		"""
 		# Generate a well-formed topic name and use it as the root 
 		# directory's name
@@ -50,9 +54,9 @@ class WikipediaCorpusReader(PlaintextCorpusReader):
 		
 		root_html = self._html_for_url(self._root_topic_url) # Download the root topic's HTML
 		if root_html is None:
-			raise ValueError('Proper article for %s could not be found' % self._root_topic_url)
+			raise ArticleNotFoundError('Proper article for %s could not be found' % self._root_topic_url)
 		if not self._is_valid_article(root_html):
-			raise ValueError('%s returns more than one topic on Wikipedia' % self._root_topic_url)
+			raise MultipleTopicError('%s returns more than one topic on Wikipedia' % self._root_topic_url)
 		self._root_fileid = self._fileid_for_url(self._root_topic_url)
 		
 		
@@ -308,7 +312,7 @@ class WikipediaCorpusReader(PlaintextCorpusReader):
 		:rtype: list of str
 		"""
 		if fileids is not None and sections is not None:
-			raise ValueError('Specify fileids or categories, not both')
+			raise SectionNotFoundError('Specify fileids or categories, not both')
 		urls = []
 		if sections is not None:
 			if isinstance(sections, basestring):
@@ -392,7 +396,7 @@ class WikipediaCorpusReader(PlaintextCorpusReader):
 			if sections in self._urls_by_section:
 				return sorted([fileid for fileid in self._fileids_by_section[sections] if fileid not in self._invalid_fileids])
 			else:
-				raise ValueError('Section %s not found' % sections)
+				raise SectionNotFoundError('Section %s not found' % sections)
 		else:
 			all_fileids_for_sections = []
 			for section in sections:

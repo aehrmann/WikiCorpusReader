@@ -5,7 +5,6 @@ main.py
 
 Created by Ari Ehrmann.
 Email address: <ari.ehrmann@gmail.com>
-LING 131A Final Project: Wikipedia Language Processor
 """
 from pprint import pprint
 from wikipedia_corpus_reader import WikipediaCorpusReader
@@ -46,8 +45,8 @@ def testCases():
 	pprint(reader.raw(sections='Employees'))
 	print ''
 	
-	printHeader("First 100 words for fileid 'Hitachi.txt':")
-	pprint(list(reader.words(fileids='Hitachi.txt'))[:100])
+	printHeader("First 100 words for fileid 'Hayneedle.txt'")
+	pprint(list(reader.words(fileids=['Hayneedle.txt']))[:100])
 	print ''
 	
 	printHeader("New instance of WikipediaCorpusReader with topic 'Hitachi':")

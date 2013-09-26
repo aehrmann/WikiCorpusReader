@@ -1,0 +1,176 @@
+|=============================================================================|
+|==================== README for TextGraphAnalysis Project ===================|
+|============================= by Ari Ehrmann ================================|
+
+Classes contained in project (by file):
+	- text_entity.py
+		+ AbstractTextEntity
+		+ WikipediaTextEntity
+
+	- text_graph.py
+		+ TextGraph
+
+Functions 
+	- analysis_functions.py
+		* get_words
+		* compare_content
+		* common_words
+		* most_frequent_words
+		* average_word_length
+
+Project consists of three primary components:
+	- Text entities:
+		+ text entities are responsible for gathering HTML content and 
+		transforming that content into plaintext for use by the graph and text 
+		analyzer objects
+		+ for example, a WikipediaTextEntity object accepts a topic/title and 
+		does the proper processing to fetch the plain text from the HTML 
+		content associated with that page's article.
+
+	- Text graphs:
+		+ text graphs represent a collection of text entities with one 
+		specified as the root of the graph. The graphs are then fed into text 
+		analyzer objects that perform linguistic analysis on the sub-entities 
+		compare with the root entity
+		+ for example, a TextGraph initialized with 'computer science' as its 
+		root title/topic would generate a list of other entities based on the 
+		topic links found within the Wikipedia article page for 'computer 
+		science'
+
+Basic API for Classes:
+|===================|
+|===Text entities===|
+|===================|
+	AbstractTextEntity:
+
+		+++Description+++
+			Represents a page or article from a site on the Web that has 
+			links to other pages with their own links, such as those found
+			on Wikipedia. The entity stores its page's plain text content 
+			along with a title and URL.
+
+		+++Initialization+++
+			* Computes and stores the raw title and the human-readable
+				title
+			* Stores a flag whether it's a root entity (which determines
+				whether it extracts the sub-entity links from the HTML that
+				is fetched for the page
+			* Computes the URL (has to convert to formal ending if the 
+				input is from the user, otherwise the URL can be generated
+				by adding the title passed in to the end of the base URL) 
+			* Fetches the page source. If the page is the root and is not
+				found, that means that the user entered a title such that 
+				there doesn't exist an article for that subject. Otherwise,
+				exit initialization
+			* Extract the sub-entity links if this is a root entity.
+			* Get the plaintext for this page
+
+		+++Declares the following abstract methods+++
+			* _url_for_title(title): returns a sub-type specific URL 
+				for the given title, e.g. calling _url_for_title('computer 
+				science') on a WikipediaTextObject should return 
+				'http://www.wikipedia.com/wiki/Computer_Science/'
+			* _get_subtopics(html): returns a list of sub-type specific
+				titles that are found in the HTML source passed
+			* _get_cleaned_text(html): extracts all of the plain text
+				in the given HTML source (specific to structure of sub-
+				type pages)
+			* _humanize_title(title): returns a more human-readable,
+				title for use in an interactive environment e.g. 
+				_humanize_title('Computer_Science') returns 'Computer 
+				Science'
+			* _titleize(title): converts the given string to the 
+				appropriate title for use with the correct subtype, e.g.
+				for a WikipediaTextEntity, _titleize('computer science') 
+				would return 'Computer_Science'
+		
+		+++Defines the following methods+++
+			* Standard __str__ and __repr__ methods, which are inherited
+				by subclass
+
+		+++Other+++
+			Also defines the method safe_read_html(url) which simply does the
+			fetching of HTML content
+
+	WikipediaTextEntity:
+
+		+++Description+++ 
+			Represent a text entity that deals with content from Wikipedia
+
+		+++Overrides the following methods+++
+			_titleize(title)
+			_humanize_title(title)
+			_url_for_title(title)
+			_get_cleaned_text(html)
+			_get_subtopics(html)
+
+|=================|
+|===Text graph====|
+|=================|
+	TextGraph:
+
+		+++Description+++ 
+			A text graph object simply stores a collection of 
+			generic text entities, with one being the root, allowing whatever
+			object it is passed to access to the text of each of the entities.
+
+		+++Initialization+++
+			* Creates the root entity by using the passed in constructor
+			* The title of the graph becomes the title of its root node
+			* Creates a dictionary where the keys are the titles of the 
+				entities and the values are the entities themselves
+
+		+++Defines the following methods+++
+			* Standard __str__ and __repr__ methods
+			* Modifies the __getattr__ to return the root entity when
+				a user asks for graph.root
+			# subtopic_titles, root_title and all_titles, which return the
+				names of the subtopic entities, the root entity, and all of
+				the entities combined, respectively.
+			# comparative_analysis, aggregate_analysis, individual_analysis
+				(all of which are explained in the next section): these 
+				functions accept a standard set of optional keyword arguments
+				and an analysis function over those arguments (also discussed
+				in the next section).
+
+|========================|
+|===Analysis Functions===|
+|========================|
+	+++Description+++
+		The analysis functions represent the means of generating meaningful 
+		linguistic analysis on TextGraph objects. The interface is a bit too
+		loosely defined (all of the functions accept the same set of optional 
+		arguments) so that they can be used in different analysis contexts, 
+		which are summarized as follows:
+			- Comparative analysis: takes each subtopics content and performs
+				some sort of comparison between them. An example is content
+				similarity: each node's text is compared to the root's and
+				a percentage of similarity between the texts is returned 
+				for each non-root node.
+			- Aggregate analysis: generates a single value (number, string, 
+				list) based on running a function over the aggregated text
+				of all of the nodes (including the root). An example is the
+				most frequent words function: returns the n most common words 
+				in all of the combined text in the graph.
+			- Inidividual analysis: generates a value for each node (including 
+				the root). An example is the average word length function: returns
+				a dictionary mapping titles of nodes to the average word length
+				of their text.
+				
+	+++Defines the following methods+++
+		* get_words: helper method to break a chunk of text into a set of 
+			unique words
+		* compare_content: returns a float representing the similarity of the 
+			first argument to the second
+		* common_words: returns words common to all of the specified titles (
+			defaults to all)
+		* most_frequent_words: returns a list of the most frequent words in the
+			combined content of all of the specified titles
+		* average_word_length: returns the average length of word in the given
+			text content
+
+|========================|
+|=========Notes==========|
+|========================|
+	- One of the tests for TextGraph doesn't pass. I think it has something to do
+	with the pickling and unpickling of modified classes. 
